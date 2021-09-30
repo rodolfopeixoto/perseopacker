@@ -1,0 +1,53 @@
+FROM ruby:2.5.5
+
+ENV LANG C.UTF-8
+ENV APP_HOME /usr/src/app
+
+ENV BUNDLER_VERSION 2.2.21
+ENV NODE_VERSION 10.24.1
+ENV BUNDLE_RETRY 5
+ENV RAILS_ENV development
+ENV RACK_ENV development
+ENV NODE_ENV development
+ENV RAILS_SERVE_STATIC_FILES false
+ENV PATH_PERSEO_BACKEND ./perseo
+
+RUN apt-get update -qq && apt-get install -y build-essential nodejs postgresql-client libimlib2-dev
+
+RUN apt-get update && \
+    apt-get install wget curl ca-certificates rsync -y
+RUN wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.2/install.sh | bash
+ENV NVM_DIR=/root/.nvm
+RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" &&  nvm use v${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
+RUN cp /root/.nvm/versions/node/v${NODE_VERSION}/bin/node /usr/bin/
+RUN cp /root/.nvm/versions/node/v${NODE_VERSION}/bin/npm /usr/bin/
+RUN /root/.nvm/versions/node/v${NODE_VERSION}/bin/npm install  leasot@latest -g
+
+# This is a error handling when to be occurred yarn error.
+RUN apt-get update -qq && apt-get install -y curl && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && apt-get update && apt-get install -y yarn
+
+RUN rm -rf /var/lib/apt/lists/*
+
+RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
+COPY $PATH_PERSEO_BACKEND/ $APP_HOME/
+# COPY $PATH_PERSEO_BACKEND/Gemfile.lock $APP_HOME/Gemfile.lock
+
+RUN gem install bundler -v $BUNDLER_VERSION
+
+RUN bundle install
+
+ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+
+RUN npm -v
+RUN npm install
+
+COPY . $APP_HOME
+
+EXPOSE  8080
+
+# COPY ./docker/perseo-backend/startup.sh $APP_HOME
+
+CMD [ "bundle", "exec", "rails", "server", "-p", "8080", "-b", "0.0.0.0"]

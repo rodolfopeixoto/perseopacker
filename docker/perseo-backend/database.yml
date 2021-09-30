@@ -1,0 +1,22 @@
+default: &default
+  pool: <%= ENV['DB_POOL'] || ENV['MAX_THREADS'] || 10 %>
+  timeout: 5000
+  encoding: utf8
+  reconnect: true
+  adapter: mysql2
+
+development:
+  <<: *default
+  database: perseo
+  username: root
+  password: Mysql2021!
+  host: mysql
+  port: 3306
+
+test:
+  <<: *default
+  database: perseo_test
+  username: root
+  password: SENHA
+  host: localhost
+  port: 3306

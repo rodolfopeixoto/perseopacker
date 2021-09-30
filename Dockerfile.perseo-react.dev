@@ -1,0 +1,11 @@
+FROM hub.furycloud.io/mercadolibre/nodejs:10-mini
+
+WORKDIR /usr/src/app
+
+RUN npm install
+
+COPY ./perseo-react/ .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
